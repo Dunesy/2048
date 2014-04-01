@@ -5,7 +5,7 @@ public class Node
 {
 	Evaluator data;
 	public int depth;
-	int score; 
+	double score; 
 	
 	Node(Evaluator adata)
 	{		
@@ -20,9 +20,9 @@ public class Node
 		return this.data.equals(adata.data);
 	}
 	
-	public int Evaluate()
+	public double Evaluate()
 	{		
-		return score > 0 ? score : (score = data.Evaluate());	
+		return score > 0 ? score : (score = data.EvaluateTwo());	
 	}
 	
 }

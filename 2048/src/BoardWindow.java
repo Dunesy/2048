@@ -59,14 +59,14 @@ class Tile extends JPanel
 			GridBagLayout layout = new GridBagLayout();
 			GridBagConstraints constraints = new GridBagConstraints();
 			setLayout(layout);
-			panels = new JButton[5][5];
+			panels = new JButton[4][4];
 			constraints.gridwidth = 1;
 			constraints.gridheight = 1;
 			constraints.insets = new Insets(2,2,2,2);
 
-			for (int i = 0 ; i < 5 ; i++)
+			for (int i = 0 ; i < 4; i++)
 			{
-				for (int j = 0 ; j < 5 ; j++)
+				for (int j = 0 ; j < 4 ; j++)
 				{
 					panels[i][j] = new JButton();
 					panels[i][j].setBackground(Color.GRAY);
@@ -83,9 +83,9 @@ class Tile extends JPanel
 
 		public void setTiles(Board aBoard)
 		{
-			for (int i = 0 ; i < 5; i ++)
+			for (int i = 0 ; i < 4; i ++)
 			{
-				for (int j = 0 ; j < 5 ; j ++)
+				for (int j = 0 ; j < 4 ; j ++)
 				{
 					if (aBoard.board[i][j] > 0)
 					{
