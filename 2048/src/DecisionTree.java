@@ -1,35 +1,25 @@
+import java.util.HashMap;
 import java.util.Set;
-import java.util.HashSet;;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public class DecisionTree
 {	
-	Set<Node> nodeSet;
+	ConcurrentHashMap <Long,Node> nodeSet;
 	
 	DecisionTree()
 	{		
-		nodeSet = new HashSet<Node>();			
-	}
-	
-	public Node find(Node node)
-	{
-		for (Node n : nodeSet)
-		{
-			if (n.equals(node))
-				return n;
-		}
-		return null;
+		nodeSet = new ConcurrentHashMap<Long,Node>();			
 	}
 	
 	public Node addNode(Node node)
 	{
-		if (nodeSet.add(node))
-		{
-			return node;
-		}
+		if (nodeSet.containsKey(node.Key()))
+			return nodeSet.get(node.Key());
 		else
 		{
-			return find(node);
+			nodeSet.put(node.Key(), node);
+			return node;
 		}
 	}
 	

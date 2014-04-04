@@ -4,7 +4,7 @@ import java.util.ArrayList;
 public class Board implements Evaluator
 {			
 	public int[][] board;
-	public String direction;
+	public long key = 0;
 	public Board()
 	{
 		board = new int[4][4];	
@@ -12,15 +12,9 @@ public class Board implements Evaluator
 	
 	public Board(int[][] aboard)
 	{
-		board = aboard;
-		direction = "NONE";
+		board = aboard;		
 	}
 	
-	public Board(int[][] aboard, String aDirection)
-	{
-		board = aboard;
-		direction = aDirection;
-	}
 	public boolean equals(Object b)
 	{
 	   Board toCompare = (Board)b;
@@ -227,10 +221,22 @@ public class Board implements Evaluator
 	public static ArrayList<Board> generateStatesA(Board aBoard)
 	{
 		ArrayList<Board> states = new ArrayList<Board>();
-		states.add(new Board(SlideUp(aBoard.board), "UP"));
-		states.add(new Board(SlideDown(aBoard.board), "DOWN"));
-		states.add(new Board(SlideRight(aBoard.board), "RIGHT"));
-		states.add(new Board(SlideLeft(aBoard.board), "LEFT"));
+		
+		Board up = new Board(SlideUp(aBoard.board));
+		if (!up.equals(aBoard))
+			states.add(up);
+		Board down = new Board(SlideDown(aBoard.board));
+		
+		if (!down.equals(aBoard))
+			states.add(down);
+		
+		Board right = new Board(SlideRight(aBoard.board));
+		if (!right.equals(aBoard))
+			states.add(right);
+		
+		Board left = new Board(SlideLeft(aBoard.board));
+		if (!left.equals(aBoard))
+			states.add(left);
 		
 		return states;
 	}
@@ -246,12 +252,11 @@ public class Board implements Evaluator
 				{
 					int [][] stateCopy = Copy(aBoard.board);
 					stateCopy[i][j] = 2;
-					states.add(new Board(stateCopy, aBoard.direction));
+					states.add(new Board(stateCopy));
 					
 					stateCopy = Copy(aBoard.board);
 					stateCopy[i][j] = 4;
-					states.add(new Board(stateCopy, aBoard.direction));
-					
+					states.add(new Board(stateCopy));				
 				}
 			}
 		}
@@ -269,7 +274,7 @@ public class Board implements Evaluator
 				{
 					int [][] stateCopy = Copy(aBoard.board);
 					stateCopy[i][j] = 2;
-					states.add(new Board(stateCopy, aBoard.direction));														
+					states.add(new Board(stateCopy));														
 				}
 			}
 		}
@@ -287,7 +292,7 @@ public class Board implements Evaluator
 				{
 					int [][] stateCopy = Copy(aBoard.board);
 					stateCopy[i][j] = 4;
-					states.add(new Board(stateCopy, aBoard.direction));														
+					states.add(new Board(stateCopy));														
 				}
 			}
 		}
@@ -299,6 +304,22 @@ public class Board implements Evaluator
 		return PrintOut(this);
 	}
 	
+	public long getKey()
+	{
+		if (key == 0)
+		{
+			for (int i = 0 ; i < 4; i++)
+			{
+				for (int j = 0 ; j < 4; j++)
+				{
+					key += board[j][i];
+					key *= 10;
+				}
+			}
+			key /= 10;
+		}
+		return key;
+	}
 	public static String PrintOut(Board aBoard)
 	{
 		String s = "";
@@ -310,20 +331,35 @@ public class Board implements Evaluator
 			}
 			s += "\n";
 		}
-		s += aBoard.direction;
 		return s;	
 	}
-
-		
+	
 	public int Evaluate() {
 		// TODO Auto-generated method stub
 		return Evaluate(this.board);
 	}
 
+	public double Max()
+	{
+		double max = 0;
+		for (int i = 0 ; i < 4 ; i++)
+		{
+			for (int j = 0 ; j < 4 ; j++)
+			{
+				max = Math.max(max, board[i][j]);
+			}
+		}
+		return Math.log(max) / Math.log(2);
+	}
+	
 	public double EvaluateTwo()
 	{
-		//Heuristic 1 Tile Reduction				
+		
+		//if (Board.Lost(board))
+		//	return -100000;
+		
 		double counter = 0;
+		
 		for (int i = 0 ; i < 4; i++)
 		{
 			for (int j = 0 ; j < 4 ; j++)
@@ -334,61 +370,35 @@ public class Board implements Evaluator
 				}
 			}
 		}
-		double score1 = (16 - counter) / 16.0;			
-		double score2 = 0;
-		double sum = 0;
+		double score1 = (16 - counter);					
+		double score2 = CascadeHeuristic();
+		double score3 = SmoothnessHeuristic();
+		//Smoothness Heuristic
+		double sum = 1;
 		
-		double tile = 0 ;
-		//Heuristic 2 Best Tile
-		for (int i = 0 ; i < 4; i++)
+		return  Max() * score1 + (score2 - score3 * 0.2 );
+				
+	}
+	
+	public double EvaluateThree()
+	{
+		double score = 0;
+		for (int i= 0 ; i < 4 ; i++)
 		{
 			for (int j = 0 ; j < 4 ; j++)
-			{			
-				if (board[i][j] > 0)
+			{				
+				if (board[i][j] == 0)
 				{
-					tile = Math.max(board[i][j], tile);
+					score += 12000;
+				}
+				else if (board[i][j] > 4)
+				{
+					score += board[i][j] * 10;
 				}
 			}
 		}
-		score2 = tile / 2048;
-		//Heuristic 2 Right / Left Cascade 		
-		for (int i = 0 ; i < 4; i++)		
-		{
-			for (int j = 0 ; j < 4; j++)
-			{
-				if (j == 1 || j == 2)
-				{
-					sum += board[j][i];
-				}
-				else
-				{
-					sum += 2 * board[j][i];
-				}
-			}
-		}
+		return score + organizedSpace() + SmoothnessHeuristic();  //+ isLargestInCorner();
 		
-		score2 = sum / 49152.0;
-		
-		//Heuristic 3 Top / Down Cascade 	
-		double score3 = 0;
-		sum = 0;
-		for (int i = 0 ; i < 4; i++)		
-		{
-			for (int j = 0 ; j < 4; j++)
-			{
-				if (j == 1 || j == 2)
-				{
-					sum += board[j][i];
-				}
-				else
-				{
-					sum += 2 * board[j][i];
-				}
-			}
-		}
-		score3 = sum / 49152.0;
-		
-		 return 0.3 * score1 + 0.35 * score2 + 0.35 * score3;
 	}
 	
 	public static boolean Won(int[][] board)
@@ -407,17 +417,155 @@ public class Board implements Evaluator
 	public static boolean Lost(int[][] board)
 	{
 		Board tester = new Board(board);
-		ArrayList<Board> testStates = generateStatesA(tester);
-		for (Board b : testStates)
+		for (int i= 0 ; i < 4 ; i++)
 		{
-			if (!tester.equals(b))
-				return false;
+			for (int j = 0 ; j < 4; j++)
+			{	if (j < 3)
+				if (board[j][i] == 0 || board[j + 1][i] == 0 || board[j][i] == board[j + 1][i])
+				{
+					return false;
+				}
+				if (i < 3)
+				if (board[j][i] == 0 || board[j][i + 1] == 0 || board[j][i] == board[j][i + 1])
+				{
+					return false;
+				}
+			}
 		}
 		return true;
 	}
 
+	public double CascadeHeuristic()
+	{
+		double score = 0 ;
+		double score2 = 0;
+		double bestScore = 0;
+		double bestScore2 = 0;
+		//Top / Down Approach
+		for (int i = 0 ; i < 4; i++)
+		{
+			for (int j = 0 ; j < 3; j++)
+			{			
+				double value = board[i][j] > 0 ? board[i][j] : 0;
+				double value2 = board[i][j + 1] > 0 ? board[i][j + 1] : 0;
+				if (value2 >= value)
+				{
+					score +=  1000;
+				}
+				else if (value2 <= value)
+				{
+					score += 1000;
+				}
+			}
+		}
+		bestScore = Math.max(score, score2);
+		score = 0;
+		score2 = 0;
+		//Left / Right Approach
+		for (int i = 0 ; i < 4; i++)
+		{
+			for (int j = 0 ; j < 3; j++)
+			{			
+					double value = board[j][i] > 0 ? board[j][i] : 0;
+					double value2 = board[j+1][i] > 0 ? board[j+1][i] : 0;
+					
+					if (value2 >= value)
+					{
+						score +=  5000 ;
+					}
+					else if (value2 <= value)
+					{
+						score += 5000;
+					}
+				
+			}
+		}
+		bestScore2 = Math.max(score, score2);
+		return bestScore + bestScore2;
+	}
 	
+	public double SmoothnessHeuristic()
+	{
+		double sum = 0;
+		//Vertical
+		for (int i = 0 ; i < 4; i++)		
+		{
+			for (int j = 0 ; j < 3 ; j++)
+			{				
+				if (board[i][j] != 0 && board[i][j + 1] != 0)
+				{
+					if (board[i][j] == board[i][j + 1]/2 || board[i][j] == board[i][j + 1] * 2 || board[i][j+1] == board[i][j])
+						sum += 1000;
+				}
+			}
+		}	
+		for (int i = 0 ; i < 4; i++)		
+		{			
+			for (int j = 0  ; j < 3 ; j++)
+			{	
+				if (board[j][i] != 0 && board[j+1][i] != 0)
+				{
+					if (board[j][i] == board[j+1][i]/2 || board[j][i] == board[j+1][i] * 2 ||  board[j][i] == board[j+1][i])
+						sum += 1000;
+				}
+			}
+		}
+		return sum;
+	}
+	
+	public double isBestOnTheEdge()
+	{
+		return 0;
+	}
+	
+	public double organizedSpace()
+	{
+		double score = 0;
+		for (int i = 0 ; i < 4 ; i ++)
+		{
+			if (board[i][0] > board[i][0] && 
+			   board[i][1] > board[i][0] &&
+			   board[i][2] > board[i][0])  
+			score += 12000;
+			if (board[i][0] < board[i][0] && 
+					   board[i][1] < board[i][0] &&
+					   board[i][2] < board[i][0])
+			score += 12000;			
+		}
+		
+		for (int i = 0 ; i < 4 ; i ++)
+		{
+			if (board[0][i] > board[1][i] && 
+			   board[1][i] > board[2][i] &&
+			   board[2][i] > board[3][i])  
+			score += 12000;
+			if (board[0][i] < board[1][i] && 
+					   board[1][i] < board[2][i] &&
+					   board[2][i] < board[3][i])  
+			score += 12000;			
+		}
+		return score;
+	}
 
-	
+	public double isLargestInCorner()
+	{
+		int largesti = 0;
+		int largestj = 0;
+		for (int i = 0 ; i< 4; i++)
+		{
+			for (int j= 0 ; j < 4 ; j++)
+			{
+				if (board[i][j] > board[largesti][largestj])
+				{
+					largesti = i;
+					largestj = j;
+				}
+			}
+		}
+		
+		if ((largesti == 3 || largesti == 0) && (largestj == 0 || largestj == 3) )
+			return 20000;
+		return 0;
+	}
 }
 
