@@ -5,7 +5,9 @@ import java.util.Random;
 public class Program {
 	
 	public static Random generator = new Random(System.currentTimeMillis());
-	
+	public static final int INIT_DEPTH = 6;
+	public static final int MID_DEPTH = 8;
+	public static final int LATE_DEPTH = 10;
 	public static Board CreateStartingBoard()  
 	{
 		double p = generator.nextDouble() ;
@@ -56,8 +58,9 @@ public class Program {
 				Board b = (Board)currentState.data;
 				counter ++;
 				
-				if (Board.Lost(b.board) || Board.Won(b.board))
+				if (Board.Lost(b.board))
 				{			
+					System.out.println("GameScore " + b.gameScore);
 					if (Board.Won(b.board))
 					{
 						System.out.println("Won");
@@ -70,7 +73,19 @@ public class Program {
 					break;
 				}
 				//Player A Slides
-				Node nextChoice = MultithreadedMinMax.MinMax(currentState,8);
+				Node nextChoice = null;
+				if (b.Max() < 1024)
+				{
+					 nextChoice = MultithreadedMinMax.MinMax(currentState, INIT_DEPTH);
+				}
+				else if (b.Max() < 2048)
+				{
+					nextChoice = MultithreadedMinMax.MinMax(currentState, MID_DEPTH);
+				}				
+				else
+				{
+					nextChoice = MultithreadedMinMax.MinMax(currentState, LATE_DEPTH);
+				}
 				//Player B Randomly Places Tile
 				Board choice = (Board)nextChoice.data;
 				ArrayList<Board> choices;														
@@ -92,9 +107,10 @@ public class Program {
 				window.setTiles((Board)currentState.data);			
 				window.repaint();	
 				//System.out.println(currentState.data.EvaluateThree());
-				//Thread.sleep(2000);
-				
 								
+				//if (counter > 600)
+				//	Thread.sleep(200);
+															
 			}
 			System.out.println("Moves " + counter);
 			

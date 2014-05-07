@@ -5,6 +5,7 @@ public class Board implements Evaluator
 {			
 	public int[][] board;
 	public long key = 0;
+	public int gameScore = 0;
 	public Board()
 	{
 		board = new int[4][4];	
@@ -13,6 +14,12 @@ public class Board implements Evaluator
 	public Board(int[][] aboard)
 	{
 		board = aboard;		
+	}
+	
+	public Board(int[][] aboard, int gameScore)
+	{
+		board = aboard;	
+		this.gameScore = gameScore;
 	}
 	
 	public boolean equals(Object b)
@@ -43,9 +50,10 @@ public class Board implements Evaluator
 		return boardCopy;			
 	}
 	
-	public static int[][] SlideUp(int[][] board)
+	public static Board SlideUp(Board a)
 	{
-		int[][] boardState = Copy(board);							
+		int[][] boardState = Copy(a.board);
+		int gameScore = 0;
 		for (int i = 0; i < 4; i ++ )
 		{
 			//Collapse The Cells
@@ -56,7 +64,9 @@ public class Board implements Evaluator
 				{
 					boardState[i][previousIndex] *= 2;
 					boardState[i][j] = 0;
+					gameScore += boardState[i][previousIndex];
 					previousIndex = j;
+					
 				}
 				else if (boardState[i][j] > 0 && boardState[i][previousIndex] != boardState[i][j])
 				{
@@ -80,12 +90,14 @@ public class Board implements Evaluator
 				}			
 			}
 		}
-		return boardState;
+		Board newBoard = new Board(boardState, a.gameScore + gameScore);
+		return newBoard;
 	}
 	
-	public static int[][] SlideDown(int[][] board)
+	public static Board SlideDown(Board a)
 	{
-		int[][] boardState = Copy(board);		
+		int[][] boardState = Copy(a.board);
+		int gameScore = 0;
 		for (int i = 0; i < 4; i ++ )
 		{
 			//Collapse The Cells
@@ -96,7 +108,9 @@ public class Board implements Evaluator
 				{
 					boardState[i][previousIndex] *= 2;
 					boardState[i][j] = 0;
+					gameScore += boardState[i][previousIndex];
 					previousIndex = j;
+					
 				}
 				else if (boardState[i][j] > 0 && boardState[i][previousIndex] != boardState[i][j])
 				{
@@ -119,13 +133,14 @@ public class Board implements Evaluator
 				}			
 			}
 		}
-		return boardState;
+		return new Board(boardState, gameScore + a.gameScore);
 	
 	}
 	
-	public static int[][] SlideRight(int[][] board)
+	public static Board SlideRight(Board a)
 	{
-		int[][] boardState = Copy(board);		
+		int[][] boardState = Copy(a.board);
+		int gameScore = 0;
 		for (int i = 0; i < 4; i ++ )
 		{
 			//Collapse The Cells
@@ -136,7 +151,9 @@ public class Board implements Evaluator
 				{
 					boardState[previousIndex][i] *= 2;
 					boardState[j][i] = 0;
+					gameScore += boardState[previousIndex][i];
 					previousIndex = j;
+				
 					
 				}
 				else if (boardState[j][i] > 0 && boardState[previousIndex][i] != boardState[j][i])
@@ -160,12 +177,13 @@ public class Board implements Evaluator
 				}			
 			}
 		}
-		return boardState;	
+		return new Board(boardState, gameScore + a.gameScore);
 	}
 	
-	public static int[][] SlideLeft(int[][] board)
+	public static Board SlideLeft(Board a)
 	{
-		int[][] boardState = Copy(board);		
+		int[][] boardState = Copy(a.board);	
+		int gameScore = 0;
 		for (int i = 0; i < 4; i ++ )
 		{
 			//Collapse The Cells
@@ -176,7 +194,9 @@ public class Board implements Evaluator
 				{
 					boardState[previousIndex][i] *= 2;
 					boardState[j][i] = 0;
+					gameScore += boardState[previousIndex][i];
 					previousIndex = j;
+					
 				}
 				else if (boardState[j][i] > 0 && boardState[previousIndex][i] != boardState[j][i])
 				{
@@ -199,42 +219,26 @@ public class Board implements Evaluator
 				}			
 			}
 		}
-		return boardState;	
-	}
-	
-	public static int Evaluate(int[][] board)
-	{
-		int counter = 0;
-		for (int i = 0 ; i < 4; i ++)
-		{
-			for (int j = 0 ; j < 4 ; j++)
-			{
-				if (board[i][j] > 0)
-				{
-					counter ++;
-				}
-			}
-		}
-		return (16 - counter) + 1;
+		return new Board(boardState, gameScore + a.gameScore);
 	}
 	
 	public static ArrayList<Board> generateStatesA(Board aBoard)
 	{
 		ArrayList<Board> states = new ArrayList<Board>();
 		
-		Board up = new Board(SlideUp(aBoard.board));
+		Board up = SlideUp(aBoard);
 		if (!up.equals(aBoard))
 			states.add(up);
-		Board down = new Board(SlideDown(aBoard.board));
+		Board down = SlideDown(aBoard);
 		
 		if (!down.equals(aBoard))
 			states.add(down);
 		
-		Board right = new Board(SlideRight(aBoard.board));
+		Board right = SlideRight(aBoard);
 		if (!right.equals(aBoard))
 			states.add(right);
 		
-		Board left = new Board(SlideLeft(aBoard.board));
+		Board left = SlideLeft(aBoard);
 		if (!left.equals(aBoard))
 			states.add(left);
 		
@@ -252,11 +256,11 @@ public class Board implements Evaluator
 				{
 					int [][] stateCopy = Copy(aBoard.board);
 					stateCopy[i][j] = 2;
-					states.add(new Board(stateCopy));
+					states.add(new Board(stateCopy, aBoard.gameScore));
 					
 					stateCopy = Copy(aBoard.board);
 					stateCopy[i][j] = 4;
-					states.add(new Board(stateCopy));				
+					states.add(new Board(stateCopy, aBoard.gameScore));				
 				}
 			}
 		}
@@ -274,7 +278,7 @@ public class Board implements Evaluator
 				{
 					int [][] stateCopy = Copy(aBoard.board);
 					stateCopy[i][j] = 2;
-					states.add(new Board(stateCopy));														
+					states.add(new Board(stateCopy, aBoard.gameScore));														
 				}
 			}
 		}
@@ -292,7 +296,7 @@ public class Board implements Evaluator
 				{
 					int [][] stateCopy = Copy(aBoard.board);
 					stateCopy[i][j] = 4;
-					states.add(new Board(stateCopy));														
+					states.add(new Board(stateCopy, aBoard.gameScore));														
 				}
 			}
 		}
@@ -333,12 +337,20 @@ public class Board implements Evaluator
 		}
 		return s;	
 	}
-	
-	public int Evaluate() {
-		// TODO Auto-generated method stub
-		return Evaluate(this.board);
-	}
 
+	public double sumBoard()
+	{
+		double sum = 0;
+		for (int i = 0 ;  i < 4; i++)
+		{
+			for (int j = 0 ; j < 4 ; j++)
+			{
+				sum += board[i][j];
+			}
+		}
+		return sum;
+	}
+	
 	public double Max()
 	{
 		double max = 0;
@@ -349,38 +361,10 @@ public class Board implements Evaluator
 				max = Math.max(max, board[i][j]);
 			}
 		}
-		return Math.log(max) / Math.log(2);
+		return max;
 	}
 	
-	public double EvaluateTwo()
-	{
-		
-		//if (Board.Lost(board))
-		//	return -100000;
-		
-		double counter = 0;
-		
-		for (int i = 0 ; i < 4; i++)
-		{
-			for (int j = 0 ; j < 4 ; j++)
-			{			
-				if (board[i][j] > 0)
-				{
-					counter++;
-				}
-			}
-		}
-		double score1 = (16 - counter);					
-		double score2 = CascadeHeuristic();
-		double score3 = SmoothnessHeuristic();
-		//Smoothness Heuristic
-		double sum = 1;
-		
-		return  Max() * score1 + (score2 - score3 * 0.2 );
-				
-	}
-	
-	public double EvaluateThree()
+	public double Evaluate()
 	{
 		double score = 0;
 		for (int i= 0 ; i < 4 ; i++)
@@ -389,16 +373,11 @@ public class Board implements Evaluator
 			{				
 				if (board[i][j] == 0)
 				{
-					score += 12000;
-				}
-				else if (board[i][j] > 4)
-				{
-					score += board[i][j] * 10;
-				}
+					score += 20000;
+				}				
 			}
 		}
-		return score + organizedSpace() + SmoothnessHeuristic();  //+ isLargestInCorner();
-		
+		return score + gameScore + organizedSpace() + SmoothnessHeuristic();	
 	}
 	
 	public static boolean Won(int[][] board)
@@ -407,7 +386,7 @@ public class Board implements Evaluator
 		{
 			for (int j = 0 ; j < 4 ; j++)		
 			{
-				if (board[i][j] == 2048)
+				if (board[i][j] >= 2048)
 					return true;
 			}
 		}
@@ -434,55 +413,7 @@ public class Board implements Evaluator
 		}
 		return true;
 	}
-
-	public double CascadeHeuristic()
-	{
-		double score = 0 ;
-		double score2 = 0;
-		double bestScore = 0;
-		double bestScore2 = 0;
-		//Top / Down Approach
-		for (int i = 0 ; i < 4; i++)
-		{
-			for (int j = 0 ; j < 3; j++)
-			{			
-				double value = board[i][j] > 0 ? board[i][j] : 0;
-				double value2 = board[i][j + 1] > 0 ? board[i][j + 1] : 0;
-				if (value2 >= value)
-				{
-					score +=  1000;
-				}
-				else if (value2 <= value)
-				{
-					score += 1000;
-				}
-			}
-		}
-		bestScore = Math.max(score, score2);
-		score = 0;
-		score2 = 0;
-		//Left / Right Approach
-		for (int i = 0 ; i < 4; i++)
-		{
-			for (int j = 0 ; j < 3; j++)
-			{			
-					double value = board[j][i] > 0 ? board[j][i] : 0;
-					double value2 = board[j+1][i] > 0 ? board[j+1][i] : 0;
-					
-					if (value2 >= value)
-					{
-						score +=  5000 ;
-					}
-					else if (value2 <= value)
-					{
-						score += 5000;
-					}
-				
-			}
-		}
-		bestScore2 = Math.max(score, score2);
-		return bestScore + bestScore2;
-	}
+	
 	
 	public double SmoothnessHeuristic()
 	{
@@ -492,10 +423,16 @@ public class Board implements Evaluator
 		{
 			for (int j = 0 ; j < 3 ; j++)
 			{				
-				if (board[i][j] != 0 && board[i][j + 1] != 0)
+				if (board[i][j] != 0 && board[i][j + 1] != 0 && board[i][j] > 256 && board[i][j + 1] > 256)
 				{
+					double largest = Math.max(board[i][j], board[i][j + 1]);
+					double smallest = Math.min(board[i][j], board[i][j + 1]);
 					if (board[i][j] == board[i][j + 1]/2 || board[i][j] == board[i][j + 1] * 2 || board[i][j+1] == board[i][j])
-						sum += 1000;
+					//if (smallest / largest >= .25)
+					{
+						
+						sum += 5000;
+					}
 				}
 			}
 		}	
@@ -504,68 +441,54 @@ public class Board implements Evaluator
 			for (int j = 0  ; j < 3 ; j++)
 			{	
 				if (board[j][i] != 0 && board[j+1][i] != 0)
-				{
-					if (board[j][i] == board[j+1][i]/2 || board[j][i] == board[j+1][i] * 2 ||  board[j][i] == board[j+1][i])
-						sum += 1000;
+				{					
+					double largest = Math.max(board[j][i], board[j + 1][i]);
+					double smallest = Math.min(board[j][i], board[j + 1][i]);
+					if (board[j][i] == board[j+1][i]/2 || board[j][i] == board[j+1][i] * 2 ||  board[j][i] == board[j+1][i] && board[j+1][i] > 256 && board[j][i] > 256)
+					//if (smallest / largest >= .25)
+					sum += 5000;
 				}
 			}
 		}
 		return sum;
 	}
-	
-	public double isBestOnTheEdge()
-	{
-		return 0;
-	}
-	
+		
 	public double organizedSpace()
 	{
 		double score = 0;
+	
 		for (int i = 0 ; i < 4 ; i ++)
-		{
-			if (board[i][0] > board[i][0] && 
-			   board[i][1] > board[i][0] &&
-			   board[i][2] > board[i][0])  
-			score += 12000;
-			if (board[i][0] < board[i][0] && 
-					   board[i][1] < board[i][0] &&
-					   board[i][2] < board[i][0])
-			score += 12000;			
-		}
-		
-		for (int i = 0 ; i < 4 ; i ++)
-		{
-			if (board[0][i] > board[1][i] && 
-			   board[1][i] > board[2][i] &&
-			   board[2][i] > board[3][i])  
-			score += 12000;
-			if (board[0][i] < board[1][i] && 
-					   board[1][i] < board[2][i] &&
-					   board[2][i] < board[3][i])  
-			score += 12000;			
-		}
-		return score;
-	}
-
-	public double isLargestInCorner()
-	{
-		int largesti = 0;
-		int largestj = 0;
-		for (int i = 0 ; i< 4; i++)
-		{
-			for (int j= 0 ; j < 4 ; j++)
+		{		
+			if (board[i][0] > board[i][1] && 
+			   board[i][1] >= board[i][2])
+			  // board[i][2] >= board[i][3])  
+				
+			score +=  10000;
+			if (
+					   board[i][1] <= board[i][2] &&
+					   board[i][2] < board[i][3])
 			{
-				if (board[i][j] > board[largesti][largestj])
-				{
-					largesti = i;
-					largestj = j;
-				}
+				//score +=  1000 * Math.log(board[i][3] * board[i][2] > 0 ? board[i][2] : 1 * board[i][1] > 0 ? board[i][1] : 1)/ Math.log(2) * multiplier;
 			}
 		}
 		
-		if ((largesti == 3 || largesti == 0) && (largestj == 0 || largestj == 3) )
-			return 20000;
-		return 0;
+		for (int i = 0 ; i < 4 ; i ++)
+		{
+			double multiplier = 1.5 * (3 - i) ;
+						
+			if (board[0][i] > board[1][i] && 
+			   board[1][i] >= board[2][i]
+			   )  
+			score += 1000 *  Math.log(board[0][i] * board[1][i] > 0 ? board[1][i] : 0 * board[2][i] > 0 ? board[2][i] : 1)/ Math.log(2) * multiplier;
+			if (
+					   board[1][i] <= board[2][i] &&
+					   board[2][i] < board[3][i])  
+			{
+			score += 1000 *  Math.log(board[3][i] * board[2][i] > 0 ? board[2][i] : 1  * board[1][i] > 0 ? board[1][i] : 1)/ Math.log(2) * multiplier;
+			}
+		}
+		return score;
 	}
+	
 }
 

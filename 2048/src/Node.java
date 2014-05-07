@@ -23,7 +23,7 @@ public class Node
 	
 	public double Evaluate()
 	{		
-		return score >= 0 ? score : (score = data.EvaluateThree());	
+		return score >= 0 ? score : (score = data.Evaluate());	
 	}
 	
 	public void setScore(double aScore)

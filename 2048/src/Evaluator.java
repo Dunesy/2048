@@ -1,7 +1,6 @@
 
 public interface Evaluator {
-	
-	public double EvaluateTwo();
-	public double EvaluateThree();
+		
+	public double Evaluate();
 	public long getKey();
 }
